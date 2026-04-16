@@ -1,4 +1,4 @@
-# Michael's GED Prep Hub
+# GED Prep Hub
 
 ## Implementation plan
 
@@ -32,7 +32,7 @@ Build sequence:
 
 - Subject banks now expose deeper structure through domain groupings, skill-level coverage maps, and per-skill quick-start actions.
 - Dashboard and Progress Tracker include study-activity bars, readiness drivers, difficulty-level performance, wrong-answer queues, bookmark queues, and richer exam reports.
-- Practice surfaces are designed to help Michael decide what to do next, not just accumulate scores.
+- Practice surfaces are designed to help students decide what to do next, not just accumulate scores.
 
 ## Local usage
 
