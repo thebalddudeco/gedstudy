@@ -1096,7 +1096,7 @@
     };
 
     appElements.workspaceTitle.textContent = titleMap[state.ui.activeSection] || "GED Prep Hub";
-    appElements.activeSectionEyebrow.textContent = "Michael's local GED workspace";
+    appElements.activeSectionEyebrow.textContent = "local GED workspace";
   }
 
   function renderPanels() {
