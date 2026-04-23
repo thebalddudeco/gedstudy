@@ -3,18 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GED Prep Hub</title>
+  <title>Michael's GED Prep Hub</title>
   <meta
     name="description"
-    content="A serious local GED prep app with diagnostics, subject practice, essays, exams, progress tracking, and study plans."
+    content="A serious local GED prep app for Michael with diagnostics, subject practice, essays, exams, progress tracking, and study plans."
   />
+  <script>
+    document.documentElement.classList.add("access-locked");
+  </script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="access-gate" id="access-gate">
+    <div class="access-gate__panel">
+      <p class="eyebrow">Buyer Access</p>
+      <h1>Unlock Michael's GED Prep Hub</h1>
+      <p class="access-gate__copy">
+        Enter the same email used at checkout and the Gumroad license key for this purchase to open the course on this device.
+      </p>
+      <form class="access-gate__form" id="access-gate-form">
+        <label class="field">
+          <span class="label">Purchase email</span>
+          <input
+            id="access-email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          />
+        </label>
+        <label class="field">
+          <span class="label">Gumroad license key</span>
+          <input
+            id="access-license"
+            type="text"
+            autocomplete="off"
+            placeholder="Paste your Gumroad license key"
+            required
+          />
+        </label>
+        <div class="button-row">
+          <button class="button button--primary" type="submit">Verify purchase</button>
+        </div>
+      </form>
+      <p class="access-gate__status" id="access-gate-status" role="status" aria-live="polite">
+        This browser will stay unlocked for this license after a successful check.
+      </p>
+    </div>
+  </div>
+
   <div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar__brand">
-        <p class="eyebrow">Study Course</p>
+        <p class="eyebrow">Michael's Study Course</p>
         <h1>GED Prep Hub</h1>
         <p class="sidebar__summary">
           A focused local prep workspace built for adult learning, steady confidence, and exam readiness.
@@ -83,7 +124,7 @@
             <article class="stat-block">
               <span class="stat-block__label">Recommended next step</span>
               <strong class="stat-block__value stat-block__value--small" id="dashboard-next-step">Start a diagnostic</strong>
-              <span class="stat-block__detail">Recommendations adapt as student studies.</span>
+              <span class="stat-block__detail">Recommendations adapt as Michael studies.</span>
             </article>
             <article class="stat-block">
               <span class="stat-block__label">Recent score</span>
@@ -119,7 +160,7 @@
             <div class="surface">
               <div class="surface__header">
                 <h4>Recent activity</h4>
-                <p>Saved automatically so student can leave and come back without losing context.</p>
+                <p>Saved automatically so Michael can leave and come back without losing context.</p>
               </div>
               <div id="dashboard-recent-activity" class="stack-list"></div>
             </div>
@@ -332,16 +373,7 @@
     </aside>
   </div>
 
-  <script src="data/passages.js"></script>
-  <script src="data/essays.js"></script>
-  <script src="data/essay-bank.js"></script>
-  <script src="data/questions.js"></script>
-  <script src="data/math-bank.js"></script>
-  <script src="data/rla-bank.js"></script>
-  <script src="data/science-bank.js"></script>
-  <script src="data/social-studies-bank.js"></script>
-  <script src="data/mixed-bank.js"></script>
-  <script src="data/study-plans.js"></script>
+  <script src="data/license-registry.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
