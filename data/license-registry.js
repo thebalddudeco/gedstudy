@@ -1,7 +1,7 @@
 window.GEDData = window.GEDData || {};
 
 window.GEDData.licenseRegistry = {
-  sellerName: "https://thebalddude.gumroad.com",
+  sellerName: "The Bald Dude Co.",
   productName: "GED Prep Hub",
   supportEmail: "info@thebalddude.co",
   instructions:
