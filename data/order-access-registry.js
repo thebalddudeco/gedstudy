@@ -7,9 +7,7 @@ window.GEDData.orderAccessRegistry = {
   instructions:
     "Use the same email address used at checkout and the Gumroad order ID shown on your receipt.",
   activeOrders: [
-    // Paste objects from order-helper.html here.
-    // Example:
-    // { id: "owner-test-order", hash: "paste-generated-hash-here", note: "Owner test access" }
+    { id: "owner-test-order", hash: "ac823be2d1f8dcfa3a4a5e10afc381741f251cd050209e31024ed4647c342d4b", note: "Owner test access" }
   ],
   revokedOrderHashes: [
     // Paste hashes here to revoke access later.
