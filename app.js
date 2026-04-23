@@ -1,7 +1,27 @@
 (function initializeGEDPrepApp() {
-  var STORAGE_KEY = "Student-ged-prep-state-v1";
+  window.GEDData = window.GEDData || {};
+
+  var STORAGE_KEY = "michael-ged-prep-state-v1";
+  var ACCESS_KEY = "ged-prep-license-access-v1";
   var AUTOSAVE_INTERVAL = 60000;
+  var PROTECTED_DATA_SCRIPTS = [
+    "data/passages.js",
+    "data/essays.js",
+    "data/essay-bank.js",
+    "data/questions.js",
+    "data/math-bank.js",
+    "data/rla-bank.js",
+    "data/science-bank.js",
+    "data/social-studies-bank.js",
+    "data/mixed-bank.js",
+    "data/study-plans.js"
+  ];
   var appElements = {};
+  var state;
+  var hasBoundEvents = false;
+  var appBooted = false;
+  var dataScriptsLoaded = false;
+  var bootPromise = null;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -46,7 +66,7 @@
         updatedAt: nowIso()
       },
       learner: {
-        name: "Student"
+        name: "Michael"
       },
       ui: {
         activeSection: "dashboard",
@@ -116,6 +136,282 @@
   function saveState() {
     state.meta.updatedAt = nowIso();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function getStoredAccessRecord() {
+    try {
+      return JSON.parse(localStorage.getItem(ACCESS_KEY) || "null");
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function setStoredAccessRecord(record) {
+    try {
+      localStorage.setItem(ACCESS_KEY, JSON.stringify(record));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function clearStoredAccessRecord() {
+    try {
+      localStorage.removeItem(ACCESS_KEY);
+    } catch (error) {
+      // Ignore storage-clear failures.
+    }
+  }
+
+  function applyAccessState(isGranted) {
+    document.documentElement.classList.toggle("access-granted", isGranted);
+    document.documentElement.classList.toggle("access-locked", !isGranted);
+  }
+
+  function getLicenseRegistry() {
+    var registry = window.GEDData.licenseRegistry || {};
+    return {
+      sellerName: registry.sellerName || "your Gumroad delivery",
+      productName: registry.productName || "Michael's GED Prep Hub",
+      supportEmail: registry.supportEmail || "",
+      instructions:
+        registry.instructions ||
+        "Use the same email address used at checkout and the Gumroad license key assigned to your purchase.",
+      activeLicenses: registry.activeLicenses || [],
+      revokedLicenseHashes: registry.revokedLicenseHashes || []
+    };
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function normalizeLicense(value) {
+    return String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+  }
+
+  function buildLicensePayload(email, licenseKey) {
+    return normalizeEmail(email) + "|" + normalizeLicense(licenseKey);
+  }
+
+  function isActiveLicenseHash(hash) {
+    var registry = getLicenseRegistry();
+    var revoked = registry.revokedLicenseHashes || [];
+    if (revoked.indexOf(hash) !== -1) {
+      return false;
+    }
+
+    return (registry.activeLicenses || []).some(function (entry) {
+      return entry.hash === hash;
+    });
+  }
+
+  function sha256Hex(value) {
+    if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+      return Promise.reject(new Error("missing-crypto"));
+    }
+
+    return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)).then(function (buffer) {
+      return Array.prototype.map
+        .call(new Uint8Array(buffer), function (item) {
+          return item.toString(16).padStart(2, "0");
+        })
+        .join("");
+    });
+  }
+
+  function getProtectedDataScriptStatus() {
+    return PROTECTED_DATA_SCRIPTS.every(function (path) {
+      return document.querySelector('script[data-protected-src="' + path + '"]');
+    });
+  }
+
+  function loadProtectedScript(path) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[data-protected-src="' + path + '"]')) {
+        resolve();
+        return;
+      }
+
+      var script = document.createElement("script");
+      script.src = path;
+      script.async = false;
+      script.setAttribute("data-protected-src", path);
+      script.onload = function () {
+        resolve();
+      };
+      script.onerror = function () {
+        reject(new Error("failed-to-load-" + path));
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  function loadProtectedData() {
+    if (dataScriptsLoaded || getProtectedDataScriptStatus()) {
+      dataScriptsLoaded = true;
+      return Promise.resolve();
+    }
+
+    return PROTECTED_DATA_SCRIPTS.reduce(function (chain, path) {
+      return chain.then(function () {
+        return loadProtectedScript(path);
+      });
+    }, Promise.resolve()).then(function () {
+      dataScriptsLoaded = true;
+    });
+  }
+
+  function setGateStatus(statusElement, message, tone) {
+    statusElement.textContent = message;
+    statusElement.classList.toggle("is-error", tone === "error");
+    statusElement.classList.toggle("is-success", tone === "success");
+  }
+
+  function bootApplication() {
+    if (appBooted) {
+      return Promise.resolve();
+    }
+
+    if (bootPromise) {
+      return bootPromise;
+    }
+
+    bootPromise = loadProtectedData()
+      .then(function () {
+        state = loadState();
+        buildCatalogIndex();
+        recomputeStudyStreak();
+        cacheElements();
+        if (!hasBoundEvents) {
+          bindEvents();
+          hasBoundEvents = true;
+        }
+        renderNavigation();
+        renderPanels();
+        startStudyClock();
+        startSessionTimer();
+        appBooted = true;
+      })
+      .catch(function (error) {
+        bootPromise = null;
+        throw error;
+      });
+
+    return bootPromise;
+  }
+
+  function setupAccessGate() {
+    var gateForm = document.getElementById("access-gate-form");
+    var emailInput = document.getElementById("access-email");
+    var licenseInput = document.getElementById("access-license");
+    var status = document.getElementById("access-gate-status");
+    var registry = getLicenseRegistry();
+    var storedAccessRecord = getStoredAccessRecord();
+
+    if (!gateForm || !emailInput || !licenseInput || !status) {
+      return;
+    }
+
+    applyAccessState(false);
+    setGateStatus(status, registry.instructions, "");
+
+    function unlockCourse(record) {
+      return bootApplication()
+        .then(function () {
+          applyAccessState(true);
+          if (setStoredAccessRecord(record)) {
+            setGateStatus(status, "Purchase verified. This browser will stay unlocked for this license.", "success");
+          } else {
+            setGateStatus(
+              status,
+              "Purchase verified. The course is unlocked now, but this browser could not save the access record, so you may need to enter the license again later.",
+              "success"
+            );
+          }
+          gateForm.reset();
+        })
+        .catch(function () {
+          applyAccessState(false);
+          setGateStatus(status, "Your license matched, but the protected course files could not be loaded.", "error");
+        });
+    }
+
+    if (!(registry.activeLicenses || []).length) {
+      setGateStatus(
+        status,
+        "No active license hashes are loaded yet. Seller setup: open license-helper.html, generate a buyer entry, and paste it into data/license-registry.js.",
+        "error"
+      );
+      return;
+    }
+
+    if (storedAccessRecord && storedAccessRecord.hash && isActiveLicenseHash(storedAccessRecord.hash)) {
+      setGateStatus(status, "Stored license found. Loading course...", "success");
+      unlockCourse(storedAccessRecord);
+      return;
+    }
+
+    if (storedAccessRecord) {
+      clearStoredAccessRecord();
+    }
+
+    if (!storedAccessRecord) {
+      window.setTimeout(function () {
+        emailInput.focus();
+      }, 40);
+    }
+
+    gateForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      var emailValue = normalizeEmail(emailInput.value);
+      var licenseValue = normalizeLicense(licenseInput.value);
+
+      if (!emailValue || !licenseValue) {
+        setGateStatus(status, "Enter the purchase email and the Gumroad license key to continue.", "error");
+        if (!emailValue) {
+          emailInput.focus();
+        } else {
+          licenseInput.focus();
+        }
+        return;
+      }
+
+      setGateStatus(status, "Checking Gumroad license...", "");
+
+      sha256Hex(buildLicensePayload(emailValue, licenseValue))
+        .then(function (hash) {
+          if (isActiveLicenseHash(hash)) {
+            unlockCourse({
+              email: emailValue,
+              hash: hash,
+              verifiedAt: nowIso()
+            });
+            return;
+          }
+
+          applyAccessState(false);
+          setGateStatus(
+            status,
+            "That email and license key did not match an active purchase. Double-check the Gumroad receipt details" +
+              (registry.supportEmail ? " or contact " + registry.supportEmail + "." : "."),
+            "error"
+          );
+          licenseInput.select();
+        })
+        .catch(function () {
+          applyAccessState(false);
+          setGateStatus(
+            status,
+            "This browser could not verify the license. Try a current version of Chrome, Edge, Firefox, or Safari.",
+            "error"
+          );
+        });
+    });
   }
 
   function getQuestions(subject) {
@@ -1072,10 +1368,6 @@
     }
   };
 
-  var state = loadState();
-  buildCatalogIndex();
-  recomputeStudyStreak();
-
   function renderNavigation() {
     Array.prototype.forEach.call(document.querySelectorAll("[data-nav]"), function (button) {
       button.classList.toggle("is-active", button.getAttribute("data-nav") === state.ui.activeSection);
@@ -1096,7 +1388,7 @@
     };
 
     appElements.workspaceTitle.textContent = titleMap[state.ui.activeSection] || "GED Prep Hub";
-    appElements.activeSectionEyebrow.textContent = "local GED workspace";
+    appElements.activeSectionEyebrow.textContent = "Michael's local GED workspace";
   }
 
   function renderPanels() {
@@ -1309,7 +1601,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Diagnostic summaries will appear here once Student completes a baseline check.</div>';
+        : '<div class="empty-state">Diagnostic summaries will appear here once Michael completes a baseline check.</div>';
 
     appElements.diagnosticStudyOrder.innerHTML = priorityList
       .map(function (item, index) {
@@ -1359,7 +1651,7 @@
             );
           })
           .join("")
-      : '<div class="empty-state">Diagnostic history will appear here after Student completes his first baseline check.</div>';
+      : '<div class="empty-state">Diagnostic history will appear here after Michael completes his first baseline check.</div>';
   }
 
   function buildSubjectControls(subject) {
@@ -1734,7 +2026,7 @@
         (lastResult && lastResult.subject === subject
           ? '<div class="surface"><div class="surface__header"><h4>Latest ' +
             escapeHtml(subjectLabel) +
-            ' result</h4><p>This summary stays visible after the set ends so Student can act on it.</p></div><div class="stack-list"><article class="stack-item"><div class="stack-item__label">' +
+            ' result</h4><p>This summary stays visible after the set ends so Michael can act on it.</p></div><div class="stack-list"><article class="stack-item"><div class="stack-item__label">' +
             escapeHtml(lastResult.mode) +
             "</div><strong>" +
             lastResult.score +
@@ -1851,7 +2143,7 @@
       '<div class="surface"><div class="surface__header"><h4>Study activity by day</h4><p>Visible routine matters. These bars show the last two weeks of tracked study time.</p></div>' +
       buildActivityMarkup(activitySeries) +
       "</div>" +
-      '<div class="surface"><div class="surface__header"><h4>Performance by difficulty</h4><p>Use this to see whether Student is only comfortable at one level or growing across all three.</p></div><div class="stack-list">' +
+      '<div class="surface"><div class="surface__header"><h4>Performance by difficulty</h4><p>Use this to see whether Michael is only comfortable at one level or growing across all three.</p></div><div class="stack-list">' +
       Object.keys(difficultyPerformance)
         .map(function (level) {
           var bucket = difficultyPerformance[level];
@@ -1889,7 +2181,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Weak-skill alerts will appear after Student answers more questions.</div>') +
+        : '<div class="empty-state">Weak-skill alerts will appear after Michael answers more questions.</div>') +
       "</div></div>" +
       '<div class="surface"><div class="surface__header"><h4>Recent score trend</h4><p>Diagnostics and practice sets are combined here in time order.</p></div><div class="stack-list">' +
       (recentScores.length
@@ -1930,7 +2222,7 @@
             .join("")
         : '<div class="empty-state">Most-missed categories will appear after more work is completed.</div>') +
       "</div></div>" +
-      '<div class="surface"><div class="surface__header"><h4>Time allocation</h4><p>Study time is tracked by section so Student can see where the hours are going.</p></div><div class="stack-list">' +
+      '<div class="surface"><div class="surface__header"><h4>Time allocation</h4><p>Study time is tracked by section so Michael can see where the hours are going.</p></div><div class="stack-list">' +
       (timeAllocation.length
         ? timeAllocation
             .map(function (item) {
@@ -1946,7 +2238,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Time allocation will appear after Student spends more time in subject sections.</div>') +
+        : '<div class="empty-state">Time allocation will appear after Michael spends more time in subject sections.</div>') +
       "</div></div></div>" +
       '<div class="two-up" style="margin-top:18px;">' +
       '<div class="surface"><div class="surface__header"><h4>Wrong-answer review queue</h4><p>These are the exact questions still dragging performance down.</p></div><div class="stack-list">' +
@@ -1992,7 +2284,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Bookmarked questions will appear here once Student starts saving them.</div>') +
+        : '<div class="empty-state">Bookmarked questions will appear here once Michael starts saving them.</div>') +
       "</div></div></div>" +
       '<div class="surface" style="margin-top:18px;"><div class="surface__header"><h4>Skill mastery table</h4><p>Top skills by current measured accuracy.</p></div><div class="stack-list">' +
       (mastery.length
@@ -2011,7 +2303,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Skill mastery will populate once Student has answered enough questions to establish patterns.</div>') +
+        : '<div class="empty-state">Skill mastery will populate once Michael has answered enough questions to establish patterns.</div>') +
       "</div></div></div>";
   }
 
@@ -2684,11 +2976,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    cacheElements();
-    bindEvents();
-    renderNavigation();
-    renderPanels();
-    startStudyClock();
-    startSessionTimer();
+    setupAccessGate();
   });
 })();
