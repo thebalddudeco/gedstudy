@@ -19,7 +19,7 @@
       <p class="eyebrow">Buyer Access</p>
       <h1>Unlock GED Prep Hub</h1>
       <p class="access-gate__copy">
-        Enter the same email used at checkout and the Gumroad license key for this purchase to open the course on this device.
+        Enter the same email used at checkout and the Gumroad order ID from your receipt to open the course on this device.
       </p>
       <form class="access-gate__form" id="access-gate-form">
         <label class="field">
@@ -33,12 +33,12 @@
           />
         </label>
         <label class="field">
-          <span class="label">Gumroad license key</span>
+          <span class="label">Gumroad order ID</span>
           <input
-            id="access-license"
+            id="access-order-id"
             type="text"
             autocomplete="off"
-            placeholder="Paste your Gumroad license key"
+            placeholder="Paste your Gumroad order ID"
             required
           />
         </label>
@@ -47,7 +47,7 @@
         </div>
       </form>
       <p class="access-gate__status" id="access-gate-status" role="status" aria-live="polite">
-        This browser will stay unlocked for this license after a successful check.
+        This browser will stay unlocked for this purchase after a successful check.
       </p>
     </div>
   </div>
@@ -373,7 +373,7 @@
     </aside>
   </div>
 
-  <script src="data/license-registry.js"></script>
+  <script src="data/order-access-registry.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
