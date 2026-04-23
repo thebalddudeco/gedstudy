@@ -1,7 +1,7 @@
 (function initializeGEDPrepApp() {
   window.GEDData = window.GEDData || {};
 
-  var STORAGE_KEY = "michael-ged-prep-state-v1";
+  var STORAGE_KEY = "ged-prep-hub-state-v1";
   var ACCESS_KEY = "ged-prep-license-access-v1";
   var AUTOSAVE_INTERVAL = 60000;
   var PROTECTED_DATA_SCRIPTS = [
@@ -66,7 +66,7 @@
         updatedAt: nowIso()
       },
       learner: {
-        name: "Michael"
+        name: "Learner"
       },
       ui: {
         activeSection: "dashboard",
@@ -172,7 +172,7 @@
     var registry = window.GEDData.licenseRegistry || {};
     return {
       sellerName: registry.sellerName || "your Gumroad delivery",
-      productName: registry.productName || "Michael's GED Prep Hub",
+      productName: registry.productName || "GED Prep Hub",
       supportEmail: registry.supportEmail || "",
       instructions:
         registry.instructions ||
@@ -1388,7 +1388,7 @@
     };
 
     appElements.workspaceTitle.textContent = titleMap[state.ui.activeSection] || "GED Prep Hub";
-    appElements.activeSectionEyebrow.textContent = "Michael's local GED workspace";
+    appElements.activeSectionEyebrow.textContent = "Local GED study workspace";
   }
 
   function renderPanels() {
@@ -1601,7 +1601,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Diagnostic summaries will appear here once Michael completes a baseline check.</div>';
+        : '<div class="empty-state">Diagnostic summaries will appear here once a baseline check is complete.</div>';
 
     appElements.diagnosticStudyOrder.innerHTML = priorityList
       .map(function (item, index) {
@@ -1651,7 +1651,7 @@
             );
           })
           .join("")
-      : '<div class="empty-state">Diagnostic history will appear here after Michael completes his first baseline check.</div>';
+      : '<div class="empty-state">Diagnostic history will appear here after the first baseline check.</div>';
   }
 
   function buildSubjectControls(subject) {
@@ -2026,7 +2026,7 @@
         (lastResult && lastResult.subject === subject
           ? '<div class="surface"><div class="surface__header"><h4>Latest ' +
             escapeHtml(subjectLabel) +
-            ' result</h4><p>This summary stays visible after the set ends so Michael can act on it.</p></div><div class="stack-list"><article class="stack-item"><div class="stack-item__label">' +
+            ' result</h4><p>This summary stays visible after the set ends so you can act on it.</p></div><div class="stack-list"><article class="stack-item"><div class="stack-item__label">' +
             escapeHtml(lastResult.mode) +
             "</div><strong>" +
             lastResult.score +
@@ -2143,7 +2143,7 @@
       '<div class="surface"><div class="surface__header"><h4>Study activity by day</h4><p>Visible routine matters. These bars show the last two weeks of tracked study time.</p></div>' +
       buildActivityMarkup(activitySeries) +
       "</div>" +
-      '<div class="surface"><div class="surface__header"><h4>Performance by difficulty</h4><p>Use this to see whether Michael is only comfortable at one level or growing across all three.</p></div><div class="stack-list">' +
+      '<div class="surface"><div class="surface__header"><h4>Performance by difficulty</h4><p>Use this to see whether performance is staying at one level or growing across all three.</p></div><div class="stack-list">' +
       Object.keys(difficultyPerformance)
         .map(function (level) {
           var bucket = difficultyPerformance[level];
@@ -2181,7 +2181,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Weak-skill alerts will appear after Michael answers more questions.</div>') +
+        : '<div class="empty-state">Weak-skill alerts will appear after more questions are answered.</div>') +
       "</div></div>" +
       '<div class="surface"><div class="surface__header"><h4>Recent score trend</h4><p>Diagnostics and practice sets are combined here in time order.</p></div><div class="stack-list">' +
       (recentScores.length
@@ -2222,7 +2222,7 @@
             .join("")
         : '<div class="empty-state">Most-missed categories will appear after more work is completed.</div>') +
       "</div></div>" +
-      '<div class="surface"><div class="surface__header"><h4>Time allocation</h4><p>Study time is tracked by section so Michael can see where the hours are going.</p></div><div class="stack-list">' +
+      '<div class="surface"><div class="surface__header"><h4>Time allocation</h4><p>Study time is tracked by section so you can see where the hours are going.</p></div><div class="stack-list">' +
       (timeAllocation.length
         ? timeAllocation
             .map(function (item) {
@@ -2238,7 +2238,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Time allocation will appear after Michael spends more time in subject sections.</div>') +
+        : '<div class="empty-state">Time allocation will appear after more time is spent in subject sections.</div>') +
       "</div></div></div>" +
       '<div class="two-up" style="margin-top:18px;">' +
       '<div class="surface"><div class="surface__header"><h4>Wrong-answer review queue</h4><p>These are the exact questions still dragging performance down.</p></div><div class="stack-list">' +
@@ -2284,7 +2284,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Bookmarked questions will appear here once Michael starts saving them.</div>') +
+        : '<div class="empty-state">Bookmarked questions will appear here once questions start being saved.</div>') +
       "</div></div></div>" +
       '<div class="surface" style="margin-top:18px;"><div class="surface__header"><h4>Skill mastery table</h4><p>Top skills by current measured accuracy.</p></div><div class="stack-list">' +
       (mastery.length
@@ -2303,7 +2303,7 @@
               );
             })
             .join("")
-        : '<div class="empty-state">Skill mastery will populate once Michael has answered enough questions to establish patterns.</div>') +
+        : '<div class="empty-state">Skill mastery will populate once enough questions have been answered to establish patterns.</div>') +
       "</div></div></div>";
   }
 
