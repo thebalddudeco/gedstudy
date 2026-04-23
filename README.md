@@ -1,4 +1,5 @@
-# GED Prep Hub
+[README.md](https://github.com/user-attachments/files/27019373/README.md)
+# Michael's GED Prep Hub
 
 ## Implementation plan
 
@@ -19,6 +20,7 @@ Build sequence:
 - `app.js`: state management, rendering, persistence, quiz engine, analytics, timers
 - `data/passages.js`: core reading/source passages
 - `data/questions.js`: base metadata and seed questions
+- `data/license-registry.js`: hashed Gumroad license allowlist for the hosted soft gate
 - `data/math-bank.js`: full Math bank
 - `data/rla-bank.js`: full RLA bank and added passages
 - `data/science-bank.js`: full Science bank
@@ -27,15 +29,30 @@ Build sequence:
 - `data/essays.js`: base essay lab content
 - `data/essay-bank.js`: extended essay prompt bank and examples
 - `data/study-plans.js`: study plan schedules and pacing data
+- `license-helper.html`: local seller tool for generating hashed buyer entries from Gumroad email + license key pairs
 
 ## Depth upgrades in this build
 
 - Subject banks now expose deeper structure through domain groupings, skill-level coverage maps, and per-skill quick-start actions.
 - Dashboard and Progress Tracker include study-activity bars, readiness drivers, difficulty-level performance, wrong-answer queues, bookmark queues, and richer exam reports.
-- Practice surfaces are designed to help students decide what to do next, not just accumulate scores.
+- Practice surfaces are designed to help Michael decide what to do next, not just accumulate scores.
 
 ## Local usage
 
 1. Keep all files in the same folder structure.
 2. Open `index.html` directly in a modern browser.
 3. Progress is saved in `localStorage` under the app storage key.
+
+## Gumroad license gate workflow
+
+1. Turn on license keys for the Gumroad product.
+2. For each buyer, open `license-helper.html`.
+3. Enter the buyer email and Gumroad license key, then generate a hash entry.
+4. Paste the generated object into `activeLicenses` inside `data/license-registry.js`.
+5. Generate and keep one owner test entry for yourself before launch so you can verify the hosted unlock flow any time.
+6. Upload the updated files to GitHub so the hosted app can verify the buyer entry.
+7. To revoke access later, move that buyer hash into `revokedLicenseHashes` and upload the updated registry file again.
+
+This is a GitHub-only soft gate, not true server-side access control, but it is stronger than a shared password because each buyer can have a separate license entry.
+
+This workflow is manual: when a new Gumroad sale happens, you update `data/license-registry.js` and upload the refreshed files so the hosted app recognizes that buyer.
