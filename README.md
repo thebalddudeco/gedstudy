@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/27019879/README.md)
+[README.md](https://github.com/user-attachments/files/27020306/README.md)
 # GED Prep Hub
 
 ## Implementation plan
@@ -20,7 +20,7 @@ Build sequence:
 - `app.js`: state management, rendering, persistence, quiz engine, analytics, timers
 - `data/passages.js`: core reading/source passages
 - `data/questions.js`: base metadata and seed questions
-- `data/license-registry.js`: hashed Gumroad license allowlist for the hosted soft gate
+- `data/order-access-registry.js`: hashed Gumroad order-ID allowlist for the hosted soft gate
 - `data/math-bank.js`: full Math bank
 - `data/rla-bank.js`: full RLA bank and added passages
 - `data/science-bank.js`: full Science bank
@@ -29,7 +29,7 @@ Build sequence:
 - `data/essays.js`: base essay lab content
 - `data/essay-bank.js`: extended essay prompt bank and examples
 - `data/study-plans.js`: study plan schedules and pacing data
-- `license-helper.html`: local seller tool for generating hashed buyer entries from Gumroad email + license key pairs
+- `order-helper.html`: local seller tool for generating hashed buyer entries from Gumroad email + order ID pairs
 
 ## Depth upgrades in this build
 
@@ -43,16 +43,16 @@ Build sequence:
 2. Open `index.html` directly in a modern browser.
 3. Progress is saved in `localStorage` under the app storage key.
 
-## Gumroad license gate workflow
+## Gumroad order-ID gate workflow
 
-1. Turn on license keys for the Gumroad product.
-2. For each buyer, open `license-helper.html`.
-3. Enter the buyer email and Gumroad license key, then generate a hash entry.
-4. Paste the generated object into `activeLicenses` inside `data/license-registry.js`.
-5. Generate and keep one owner test entry for yourself before launch so you can verify the hosted unlock flow any time.
+1. For each buyer, open the Gumroad receipt and copy the purchase email and order ID.
+2. Open `order-helper.html`.
+3. Enter the buyer email and Gumroad order ID, then generate a hash entry.
+4. Paste the generated object into `activeOrders` inside `data/order-access-registry.js`.
+5. Make one test purchase for yourself before launch so you can generate and keep an owner test entry for the hosted unlock flow.
 6. Upload the updated files to GitHub so the hosted app can verify the buyer entry.
-7. To revoke access later, move that buyer hash into `revokedLicenseHashes` and upload the updated registry file again.
+7. To revoke access later, move that buyer hash into `revokedOrderHashes` and upload the updated registry file again.
 
-This is a GitHub-only soft gate, not true server-side access control, but it is stronger than a shared password because each buyer can have a separate license entry.
+This is a GitHub-only soft gate, not true server-side access control, but it is stronger than a shared password because each buyer can have a separate purchase entry.
 
-This workflow is manual: when a new Gumroad sale happens, you update `data/license-registry.js` and upload the refreshed files so the hosted app recognizes that buyer.
+This workflow is manual: when a new Gumroad sale happens, you update `data/order-access-registry.js` and upload the refreshed files so the hosted app recognizes that buyer.
