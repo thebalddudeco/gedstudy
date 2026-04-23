@@ -234,7 +234,7 @@ window.GEDData = window.GEDData || {};
       prompt:
         "During a " +
         spec.label +
-        ", Michael spends " +
+        ", the shopper spends " +
         formatMoney(spec.a) +
         " and " +
         formatMoney(spec.b) +
