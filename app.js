@@ -2,7 +2,7 @@
   window.GEDData = window.GEDData || {};
 
   var STORAGE_KEY = "ged-prep-hub-state-v1";
-  var ACCESS_KEY = "ged-prep-license-access-v1";
+  var ACCESS_KEY = "ged-prep-order-access-v1";
   var AUTOSAVE_INTERVAL = 60000;
   var PROTECTED_DATA_SCRIPTS = [
     "data/passages.js",
@@ -168,17 +168,17 @@
     document.documentElement.classList.toggle("access-locked", !isGranted);
   }
 
-  function getLicenseRegistry() {
-    var registry = window.GEDData.licenseRegistry || {};
+  function getAccessRegistry() {
+    var registry = window.GEDData.orderAccessRegistry || {};
     return {
       sellerName: registry.sellerName || "your Gumroad delivery",
       productName: registry.productName || "GED Prep Hub",
       supportEmail: registry.supportEmail || "",
       instructions:
         registry.instructions ||
-        "Use the same email address used at checkout and the Gumroad license key assigned to your purchase.",
-      activeLicenses: registry.activeLicenses || [],
-      revokedLicenseHashes: registry.revokedLicenseHashes || []
+        "Use the same email address used at checkout and the Gumroad order ID shown on your receipt.",
+      activeOrders: registry.activeOrders || [],
+      revokedOrderHashes: registry.revokedOrderHashes || []
     };
   }
 
@@ -186,25 +186,22 @@
     return String(value || "").trim().toLowerCase();
   }
 
-  function normalizeLicense(value) {
-    return String(value || "")
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "");
+  function normalizeOrderId(value) {
+    return String(value || "").trim().replace(/\s+/g, "");
   }
 
-  function buildLicensePayload(email, licenseKey) {
-    return normalizeEmail(email) + "|" + normalizeLicense(licenseKey);
+  function buildAccessPayload(email, orderId) {
+    return normalizeEmail(email) + "|" + normalizeOrderId(orderId);
   }
 
-  function isActiveLicenseHash(hash) {
-    var registry = getLicenseRegistry();
-    var revoked = registry.revokedLicenseHashes || [];
+  function isActiveOrderHash(hash) {
+    var registry = getAccessRegistry();
+    var revoked = registry.revokedOrderHashes || [];
     if (revoked.indexOf(hash) !== -1) {
       return false;
     }
 
-    return (registry.activeLicenses || []).some(function (entry) {
+    return (registry.activeOrders || []).some(function (entry) {
       return entry.hash === hash;
     });
   }
@@ -307,12 +304,12 @@
   function setupAccessGate() {
     var gateForm = document.getElementById("access-gate-form");
     var emailInput = document.getElementById("access-email");
-    var licenseInput = document.getElementById("access-license");
+    var orderIdInput = document.getElementById("access-order-id");
     var status = document.getElementById("access-gate-status");
-    var registry = getLicenseRegistry();
+    var registry = getAccessRegistry();
     var storedAccessRecord = getStoredAccessRecord();
 
-    if (!gateForm || !emailInput || !licenseInput || !status) {
+    if (!gateForm || !emailInput || !orderIdInput || !status) {
       return;
     }
 
@@ -324,11 +321,11 @@
         .then(function () {
           applyAccessState(true);
           if (setStoredAccessRecord(record)) {
-            setGateStatus(status, "Purchase verified. This browser will stay unlocked for this license.", "success");
+            setGateStatus(status, "Purchase verified. This browser will stay unlocked for this purchase.", "success");
           } else {
             setGateStatus(
               status,
-              "Purchase verified. The course is unlocked now, but this browser could not save the access record, so you may need to enter the license again later.",
+              "Purchase verified. The course is unlocked now, but this browser could not save the access record, so you may need to enter the order ID again later.",
               "success"
             );
           }
@@ -336,21 +333,21 @@
         })
         .catch(function () {
           applyAccessState(false);
-          setGateStatus(status, "Your license matched, but the protected course files could not be loaded.", "error");
+          setGateStatus(status, "Your order matched, but the protected course files could not be loaded.", "error");
         });
     }
 
-    if (!(registry.activeLicenses || []).length) {
+    if (!(registry.activeOrders || []).length) {
       setGateStatus(
         status,
-        "No active license hashes are loaded yet. Seller setup: open license-helper.html, generate a buyer entry, and paste it into data/license-registry.js.",
+        "No active order hashes are loaded yet. Seller setup: open order-helper.html, generate a buyer entry, and paste it into data/order-access-registry.js.",
         "error"
       );
       return;
     }
 
-    if (storedAccessRecord && storedAccessRecord.hash && isActiveLicenseHash(storedAccessRecord.hash)) {
-      setGateStatus(status, "Stored license found. Loading course...", "success");
+    if (storedAccessRecord && storedAccessRecord.hash && isActiveOrderHash(storedAccessRecord.hash)) {
+      setGateStatus(status, "Stored purchase record found. Loading course...", "success");
       unlockCourse(storedAccessRecord);
       return;
     }
@@ -369,23 +366,23 @@
       event.preventDefault();
 
       var emailValue = normalizeEmail(emailInput.value);
-      var licenseValue = normalizeLicense(licenseInput.value);
+      var orderIdValue = normalizeOrderId(orderIdInput.value);
 
-      if (!emailValue || !licenseValue) {
-        setGateStatus(status, "Enter the purchase email and the Gumroad license key to continue.", "error");
+      if (!emailValue || !orderIdValue) {
+        setGateStatus(status, "Enter the purchase email and the Gumroad order ID to continue.", "error");
         if (!emailValue) {
           emailInput.focus();
         } else {
-          licenseInput.focus();
+          orderIdInput.focus();
         }
         return;
       }
 
-      setGateStatus(status, "Checking Gumroad license...", "");
+      setGateStatus(status, "Checking purchase record...", "");
 
-      sha256Hex(buildLicensePayload(emailValue, licenseValue))
+      sha256Hex(buildAccessPayload(emailValue, orderIdValue))
         .then(function (hash) {
-          if (isActiveLicenseHash(hash)) {
+          if (isActiveOrderHash(hash)) {
             unlockCourse({
               email: emailValue,
               hash: hash,
@@ -397,17 +394,17 @@
           applyAccessState(false);
           setGateStatus(
             status,
-            "That email and license key did not match an active purchase. Double-check the Gumroad receipt details" +
+            "That email and order ID did not match an active purchase. Double-check the Gumroad receipt details" +
               (registry.supportEmail ? " or contact " + registry.supportEmail + "." : "."),
             "error"
           );
-          licenseInput.select();
+          orderIdInput.select();
         })
         .catch(function () {
           applyAccessState(false);
           setGateStatus(
             status,
-            "This browser could not verify the license. Try a current version of Chrome, Edge, Firefox, or Safari.",
+            "This browser could not verify the order ID. Try a current version of Chrome, Edge, Firefox, or Safari.",
             "error"
           );
         });
