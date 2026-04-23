@@ -1,9 +1,9 @@
 window.GEDData = window.GEDData || {};
 
 window.GEDData.licenseRegistry = {
-  sellerName: "Replace with your Gumroad store name",
-  productName: "Michael's GED Prep Hub",
-  supportEmail: "replace-with-your-support-email@example.com",
+  sellerName: "https://thebalddude.gumroad.com",
+  productName: "GED Prep Hub",
+  supportEmail: "info@thebalddude.co",
   instructions:
     "Use the same email address used at checkout and the Gumroad license key assigned to your purchase.",
   activeLicenses: [
