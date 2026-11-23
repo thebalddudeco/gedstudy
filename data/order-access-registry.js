@@ -1,8 +1,8 @@
 window.GEDData = window.GEDData || {};
 
 window.GEDData.orderAccessRegistry = {
-  sellerName: "The Bald Dude Co.",
-  productName: "GED Prep Hub",
+  sellerName: "Schmutz",
+  productName: "GED Prep Hub by Schmutz",
   supportEmail: "info@thebalddude.co",
   instructions:
     "Use the same email address used at checkout and the Gumroad order ID shown on your receipt.",

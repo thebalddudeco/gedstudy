@@ -1,6 +1,10 @@
 [README.md](https://github.com/user-attachments/files/27020306/README.md)
 # GED Prep Hub
 
+## Schmutz branding and hosting
+
+The hosted product lives on the Schmutz website at `https://schmutz.pro/ged-prep/` and is listed at `https://schmutz.pro/tools.html`. This repository is the source for the study app. The former `thepromptlab.org` custom-domain mapping has been removed.
+
 ## Implementation plan
 
 This project is being built as a fully local GED prep app that runs by opening `index.html` in a browser.
